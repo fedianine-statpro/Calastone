@@ -1,9 +1,8 @@
 ﻿using Xunit;
 using TextFilterApp.Factory;
-using TextFilterApp.FilterConfigs;
 using Moq;
 using TextFilterApp.Filters;
-using System.Collections.Generic;
+using TextFilterApp.Configuration;
 
 namespace TextFilterApp.Tests
 {
@@ -17,7 +16,7 @@ namespace TextFilterApp.Tests
         /// </summary>
         /// <param name="filterConfig">The filter configuration.</param>
         /// <returns>A configured TextProcessor instance.</returns>
-        private TextProcessor CreateTextProcessor(FilterConfig filterConfig)
+        private TextProcessor CreateTextProcessor(AppConfig.FilterConfig filterConfig)
         {
             var filters = FilterFactory.CreateFilters(filterConfig);
             return new TextProcessor(filters);
@@ -29,9 +28,9 @@ namespace TextFilterApp.Tests
         [Fact]
         public void ApplyFilters_RemovesWordsWithVowelsInMiddle()
         {
-            var filterConfig = new FilterConfig
+            var filterConfig = new AppConfig.FilterConfig
             {
-                VowelMiddleFilter = new FilterConfigBase { Enabled = true }
+                VowelMiddleFilter = new AppConfig.FilterConfig.FilterConfigBase { Enabled = true }
             };
             var textProcessor = CreateTextProcessor(filterConfig);
 
@@ -51,9 +50,9 @@ namespace TextFilterApp.Tests
         [Fact]
         public void ApplyFilters_RemovesWordsShorterThanMinLength()
         {
-            var filterConfig = new FilterConfig
+            var filterConfig = new AppConfig.FilterConfig
             {
-                LengthFilter = new LengthFilterConfig { Enabled = true, MinLength = 5 }
+                LengthFilter = new AppConfig.FilterConfig.LengthFilterConfig { Enabled = true, MinLength = 5 }
             };
             var textProcessor = CreateTextProcessor(filterConfig);
 
@@ -73,9 +72,9 @@ namespace TextFilterApp.Tests
         [Fact]
         public void ApplyFilters_RemovesWordsContainingSpecifiedCharacters()
         {
-            var filterConfig = new FilterConfig
+            var filterConfig = new AppConfig.FilterConfig
             {
-                CharacterFilter = new CharacterFilterConfig { Enabled = true, Characters = "t" }
+                CharacterFilter = new AppConfig.FilterConfig.CharacterFilterConfig { Enabled = true, Characters = "t" }
             };
             var textProcessor = CreateTextProcessor(filterConfig);
 
@@ -94,9 +93,9 @@ namespace TextFilterApp.Tests
         [Fact]
         public void ApplyFilters_RemovesWordsMatchingRegexPattern()
         {
-            var filterConfig = new FilterConfig
+            var filterConfig = new AppConfig.FilterConfig
             {
-                RegexFilter = new RegexFilterConfig { Enabled = true, Pattern = @"^\d+$" }
+                RegexFilter = new AppConfig.FilterConfig.RegexFilterConfig { Enabled = true, Pattern = @"^\d+$" }
             };
             var textProcessor = CreateTextProcessor(filterConfig);
 
@@ -118,11 +117,11 @@ namespace TextFilterApp.Tests
         [Fact]
         public void ApplyFilters_ChainsFiltersCorrectly()
         {
-            var filterConfig = new FilterConfig
+            var filterConfig = new AppConfig.FilterConfig
             {
-                VowelMiddleFilter = new FilterConfigBase { Enabled = true },
-                LengthFilter = new LengthFilterConfig { Enabled = true, MinLength = 3 },
-                CharacterFilter = new CharacterFilterConfig { Enabled = true, Characters = "t" }
+                VowelMiddleFilter = new AppConfig.FilterConfig.FilterConfigBase { Enabled = true },
+                LengthFilter = new AppConfig.FilterConfig.LengthFilterConfig { Enabled = true, MinLength = 3 },
+                CharacterFilter = new AppConfig.FilterConfig.CharacterFilterConfig { Enabled = true, Characters = "t" }
             };
             var textProcessor = CreateTextProcessor(filterConfig);
 
@@ -146,9 +145,9 @@ namespace TextFilterApp.Tests
         [Fact]
         public void ApplyFilters_EarlyExitWhenNoWordsLeft()
         {
-            var filterConfig = new FilterConfig
+            var filterConfig = new AppConfig.FilterConfig
             {
-                LengthFilter = new LengthFilterConfig { Enabled = true, MinLength = 10 }
+                LengthFilter = new AppConfig.FilterConfig.LengthFilterConfig { Enabled = true, MinLength = 10 }
             };
             var textProcessor = CreateTextProcessor(filterConfig);
 
@@ -169,8 +168,8 @@ namespace TextFilterApp.Tests
 
             var orderList = new List<string>();
 
-            mockFilter1.Setup(f => f.Apply(It.IsAny<IEnumerable<string>>())).Callback(() => orderList.Add("Filter1")).Returns<IEnumerable<string>>(words => words);
-            mockFilter2.Setup(f => f.Apply(It.IsAny<IEnumerable<string>>())).Callback(() => orderList.Add("Filter2")).Returns<IEnumerable<string>>(words => words);
+            mockFilter1.Setup(f => f.Apply(It.IsAny<string>())).Callback(() => orderList.Add("Filter1")).Returns<string>(word => true);
+            mockFilter2.Setup(f => f.Apply(It.IsAny<string>())).Callback(() => orderList.Add("Filter2")).Returns<string>(word => true);
 
             var filters = new List<IFilter> { mockFilter1.Object, mockFilter2.Object };
             var textProcessor = new TextProcessor(filters);
@@ -178,11 +177,19 @@ namespace TextFilterApp.Tests
             var input = "this is a test";
             var result = textProcessor.ApplyFilters(input);
 
-            // Verify that filters are called in order
-            Assert.Equal(new List<string> { "Filter1", "Filter2" }, orderList);
+            // Verify that filters are called in order for each word
+            var expectedOrder = new List<string>
+            {
+                "Filter1", "Filter2", // for "this"
+                "Filter1", "Filter2", // for "is"
+                "Filter1", "Filter2", // for "a"
+                "Filter1", "Filter2"  // for "test"
+            };
 
-            mockFilter1.Verify(f => f.Apply(It.IsAny<IEnumerable<string>>()), Times.Once);
-            mockFilter2.Verify(f => f.Apply(It.IsAny<IEnumerable<string>>()), Times.Once);
+            Assert.Equal(expectedOrder, orderList);
+
+            mockFilter1.Verify(f => f.Apply(It.IsAny<string>()), Times.Exactly(4));
+            mockFilter2.Verify(f => f.Apply(It.IsAny<string>()), Times.Exactly(4));
         }
 
         /// <summary>
@@ -191,9 +198,9 @@ namespace TextFilterApp.Tests
         [Fact]
         public void ApplyFilters_HandlesEmptyInput()
         {
-            var filterConfig = new FilterConfig
+            var filterConfig = new AppConfig.FilterConfig
             {
-                LengthFilter = new LengthFilterConfig { Enabled = true, MinLength = 5 }
+                LengthFilter = new AppConfig.FilterConfig.LengthFilterConfig { Enabled = true, MinLength = 5 }
             };
             var textProcessor = CreateTextProcessor(filterConfig);
 

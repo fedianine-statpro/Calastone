@@ -18,15 +18,15 @@
         }
 
         /// <summary>
-        /// Applies the character filter to the input words.
-        /// Filters out words that contain any of the specified characters.
+        /// Applies the character filter to the input word.
+        /// Filters out the word if it contains any of the specified characters.
         /// </summary>
-        /// <param name="words">The input words to filter.</param>
-        /// <returns>The filtered words.</returns>
-        public IEnumerable<string> Apply(IEnumerable<string> words)
+        /// <param name="word">The input word to filter.</param>
+        /// <returns>True if the word passes the filter, otherwise false.</returns>
+        public bool Apply(string word)
         {
-            // Filter words based on the presence of any specified characters
-            return words.Where(word => !_characters.Any(c => word.Contains(c)));
+            // Filter word based on the presence of any specified characters
+            return !_characters.Any(c => word.Contains(c));
         }
     }
 }

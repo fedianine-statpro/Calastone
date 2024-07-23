@@ -1,7 +1,4 @@
-﻿using System;
-using System.Diagnostics;
-using System.IO;
-using System.Threading.Tasks;
+﻿using System.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using TextFilterApp.Configuration;
@@ -13,35 +10,44 @@ namespace TextFilterApp
     {
         static async Task Main(string[] args)
         {
-            // Hardcoded file paths for text and configuration files
-            string textFilePath = "sample.txt";
-            string configFilePath = "appsettings.json";
-
-            // Check if the text file exists
-            if (!File.Exists(textFilePath))
+            try
             {
-                Console.WriteLine("The provided text file path does not exist.");
-                return;
-            }
+                // Hardcoded file paths for text and configuration files
+                string textFilePath = "sample.txt";
+                string configFilePath = "appsettings.json";
 
-            // Check if the configuration file exists
-            if (!File.Exists(configFilePath))
+                // Check if the text file exists
+                if (!File.Exists(textFilePath))
+                {
+                    Console.WriteLine("The provided text file path does not exist.");
+                    return;
+                }
+
+                // Check if the configuration file exists
+                if (!File.Exists(configFilePath))
+                {
+                    Console.WriteLine("The provided configuration file path does not exist.");
+                    return;
+                }
+
+                // Set up dependency injection and configuration
+                var serviceProvider = ConfigureServices(configFilePath);
+                var textProcessor = serviceProvider.GetService<TextProcessor>();
+
+                // Measure execution time
+                var stopwatch = Stopwatch.StartNew();
+                await textProcessor.ProcessFileAsync(textFilePath);
+                stopwatch.Stop();
+
+                // Output execution time
+                Console.WriteLine($"Execution time: {stopwatch.ElapsedMilliseconds} ms");
+            }
+            catch (Exception ex)
             {
-                Console.WriteLine("The provided configuration file path does not exist.");
-                return;
+                // Log the exception
+                Console.WriteLine($"An error occurred: {ex.Message}");
+                Console.WriteLine($"Stack Trace: {ex.StackTrace}");
             }
-
-            // Set up dependency injection and configuration
-            var serviceProvider = ConfigureServices(configFilePath);
-            var textProcessor = serviceProvider.GetService<TextProcessor>();
-
-            // Measure execution time
-            var stopwatch = Stopwatch.StartNew();
-            await ProcessFileAsync(textFilePath, textProcessor);
-            stopwatch.Stop();
-
-            // Output execution time
-            Console.WriteLine($"Execution time: {stopwatch.ElapsedMilliseconds} ms");
         }
 
         /// <summary>
@@ -71,24 +77,6 @@ namespace TextFilterApp
                 });
 
             return services.BuildServiceProvider();
-        }
-
-        /// <summary>
-        /// Processes the text file line by line and applies filters to each line.
-        /// </summary>
-        /// <param name="filePath">The path to the text file.</param>
-        /// <param name="textProcessor">The text processor to apply filters.</param>
-        private static async Task ProcessFileAsync(string filePath, TextProcessor textProcessor)
-        {
-            // Read the file line by line
-            using var reader = new StreamReader(filePath);
-            string line;
-            while ((line = await reader.ReadLineAsync()) != null)
-            {
-                // Apply filters to each line and output the result
-                string resultText = textProcessor.ApplyFilters(line);
-                Console.WriteLine(resultText);
-            }
         }
     }
 }

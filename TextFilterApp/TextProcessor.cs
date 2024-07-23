@@ -1,42 +1,52 @@
-﻿using System;
-using System.Linq;
-using System.Text.RegularExpressions;
-using System.Collections.Generic;
+﻿using System.Text.RegularExpressions;
 using TextFilterApp.Filters;
 
-public class TextProcessor
+
+namespace TextFilterApp
 {
-    private readonly List<IFilter> _filters;
 
-    public TextProcessor(List<IFilter> filters)
+    public class TextProcessor
     {
-        _filters = filters;
-    }
+        private readonly List<IFilter> _filters;
 
-    /// <summary>
-    /// Applies all the filters to the input text and returns the filtered text.
-    /// </summary>
-    public string ApplyFilters(string input)
-    {
-        // Normalize text to lower case
-        input = input.ToLower();
-
-        // Split the input text into words based on whitespace and punctuation characters.
-        var words = Regex.Split(input, @"[\s\p{P}]+", RegexOptions.Compiled);
-
-        // Apply each filter in sequence to the list of words.
-        foreach (var filter in _filters)
+        public TextProcessor(List<IFilter> filters)
         {
-            words = filter.Apply(words).ToArray();
-
-            // Exit early if there are no more words left after applying a filter.
-            if (words.Length == 0)
-            {
-                return string.Empty;
-            }
+            _filters = filters;
         }
 
-        // Join the filtered words back into a single string and return it.
-        return string.Join(" ", words);
+        /// <summary>
+        /// Applies all the filters to the input text and returns the filtered text.
+        /// </summary>
+        public string ApplyFilters(string input)
+        {
+            // Define a regular expression to match words
+            var wordRegex = new Regex(@"\b\w+\b", RegexOptions.Compiled);
+
+            // Process each word in the input text
+            var result = wordRegex.Replace(input, match =>
+            {
+                var word = match.Value;
+                return _filters.Any(filter => !filter.Apply(word)) ? string.Empty : word;
+            });
+
+            return result;
+        }
+
+        /// <summary>
+        /// Processes the text file line by line and applies filters to each line.
+        /// </summary>
+        /// <param name="filePath">The path to the text file.</param>
+        public async Task ProcessFileAsync(string filePath)
+        {
+            // Read the file line by line
+            using var reader = new StreamReader(filePath);
+            string line;
+            while ((line = await reader.ReadLineAsync()) != null)
+            {
+                // Apply filters to each line and output the result
+                string resultText = ApplyFilters(line);
+                Console.WriteLine(resultText);
+            }
+        }
     }
 }

@@ -20,15 +20,15 @@ namespace TextFilterApp.Filters
         }
 
         /// <summary>
-        /// Applies the regex filter to the input words.
-        /// Filters out words that match the regex pattern.
+        /// Applies the regex filter to the input word.
+        /// Filters out the word if it matches the regex pattern.
         /// </summary>
-        /// <param name="words">The input words to filter.</param>
-        /// <returns>The filtered words.</returns>
-        public IEnumerable<string> Apply(IEnumerable<string> words)
+        /// <param name="word">The input word to filter.</param>
+        /// <returns>True if the word passes the filter, otherwise false.</returns>
+        public bool Apply(string word)
         {
-            // Filter words based on the regex pattern
-            return words.Where(word => !_regex.IsMatch(word));
+            // Filter word based on the regex pattern
+            return !_regex.IsMatch(word);
         }
     }
 }

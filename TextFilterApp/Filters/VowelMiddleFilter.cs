@@ -6,29 +6,26 @@
         private static readonly char[] Vowels = { 'a', 'e', 'i', 'o', 'u' };
 
         /// <summary>
-        /// Applies the vowel middle filter to the input words.
-        /// Filters out words that have a vowel in the middle.
+        /// Applies the vowel middle filter to the input word.
+        /// Filters out the word if it has a vowel in the middle.
         /// </summary>
-        /// <param name="words">The input words to filter.</param>
-        /// <returns>The filtered words.</returns>
-        public IEnumerable<string> Apply(IEnumerable<string> words)
+        /// <param name="word">The input word to filter.</param>
+        /// <returns>True if the word passes the filter, otherwise false.</returns>
+        public bool Apply(string word)
         {
-            // Filter words based on the presence of a vowel in the middle
-            return words.Where(word =>
+            // Filter word based on the presence of a vowel in the middle
+            int middleIndex = word.Length / 2;
+            if (word.Length % 2 == 0)
             {
-                int middleIndex = word.Length / 2;
-                if (word.Length % 2 == 0)
-                {
-                    // For even-length words, check the two middle characters
-                    return !Vowels.Contains(char.ToLower(word[middleIndex - 1])) &&
-                           !Vowels.Contains(char.ToLower(word[middleIndex]));
-                }
-                else
-                {
-                    // For odd-length words, check the single middle character
-                    return !Vowels.Contains(char.ToLower(word[middleIndex]));
-                }
-            });
+                // For even-length words, check the two middle characters
+                return !Vowels.Contains(char.ToLower(word[middleIndex - 1])) &&
+                       !Vowels.Contains(char.ToLower(word[middleIndex]));
+            }
+            else
+            {
+                // For odd-length words, check the single middle character
+                return !Vowels.Contains(char.ToLower(word[middleIndex]));
+            }
         }
     }
 }

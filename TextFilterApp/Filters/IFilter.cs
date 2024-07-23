@@ -2,15 +2,15 @@
 {
     /// <summary>
     /// Interface for text filters.
-    /// Defines a method for applying filters to a collection of words.
+    /// Defines a method for applying filters to a single word.
     /// </summary>
     public interface IFilter
     {
         /// <summary>
-        /// Applies the filter to the given collection of words.
+        /// Applies the filter to the given word.
         /// </summary>
-        /// <param name="words">The collection of words to filter.</param>
-        /// <returns>The filtered collection of words.</returns>
-        IEnumerable<string> Apply(IEnumerable<string> words);
+        /// <param name="word">The word to filter.</param>
+        /// <returns>True if the word passes the filter, otherwise false.</returns>
+        bool Apply(string word);
     }
 }
